@@ -1,7 +1,7 @@
 // In App.js in a new project
 
 import * as React from 'react';
-import {View, Text, Button, TextInput} from 'react-native';
+import {View, Text, Button, TextInput, Linking} from 'react-native';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
@@ -18,10 +18,14 @@ function HomeScreen({navigation, route}) {
       <Button
         title="Go to Details"
         onPress={() =>
-          navigation.navigate('Details', {
-            itemId: 12,
-            otherParam: 'deeplink test',
-          })
+          navigation.navigate(
+            'Details',
+
+            // {
+            // itemId: 12,
+            // otherParam: 'deeplink test',
+            // }
+          )
         }
       />
       <Button
@@ -62,18 +66,22 @@ function CreatePostScreen({navigation, route}) {
 
 function DetailsScreen({route, navigation}) {
   /* 2. Get the param */
-  const {itemId, otherParam} = route.params;
+  // const {itemId, otherParam} = route.params;
   return (
     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
       <Text>Details Screen</Text>
-      <Text>itemId: {JSON.stringify(itemId)}</Text>
-      <Text>otherParam: {JSON.stringify(otherParam)}</Text>
+      {/* <Text>itemId: {JSON.stringify(itemId)}</Text>
+      <Text>otherParam: {JSON.stringify(otherParam)}</Text> */}
       <Button
         title="Go to Details... again"
         onPress={() =>
-          navigation.push('Details', {
-            itemId: Math.floor(Math.random() * 100),
-          })
+          navigation.push(
+            'Details',
+            // ,
+            // {
+            // itemId: Math.floor(Math.random() * 100),
+            // }
+          )
         }
       />
       <Button title="Go to Home" onPress={() => navigation.navigate('Home')} />
@@ -84,14 +92,86 @@ function DetailsScreen({route, navigation}) {
 
 const Stack = createNativeStackNavigator();
 
+const linking = {
+  prefixes: ['deeplink://', 'https://www.example.com'],
+
+  // Custom function to get the URL which was used to open the app
+  async getInitialURL() {
+    // First, you would need to get the initial URL from your third-party integration
+    // The exact usage depend on the third-party SDK you use
+    // For example, to get the initial URL for Firebase Dynamic Links:
+    // const {isAvailable} = utils().playServicesAvailability;
+
+    // if (isAvailable) {
+    //   const initialLink = await dynamicLinks().getInitialLink();
+
+    //   if (initialLink) {
+    //     return initialLink.url;
+    //   }
+    // }
+
+    // As a fallback, you may want to do the default deep link handling
+    // const url = await Linking.getInitialURL();
+    // console.log('🚀 ~ file: App.tsx:115 ~ getInitialURL ~ url:', url);
+
+    const initialURL = await Linking.getInitialURL();
+    console.log(
+      '🚀 ~ file: App.tsx:118 ~ getInitialURL ~ initialURL:',
+      initialURL,
+    );
+
+    if (initialURL) {
+      // deeplink://?q=12345
+      const url = new URL(initialURL);
+
+      const queryParams = url
+        .toString()
+        .split('?')[1]
+        .split('q=')[1]
+        .split('/')[0];
+      console.log(
+        '🚀 ~ file: App.tsx:130 ~ getInitialURL ~ queryParams:',
+        queryParams,
+      );
+    }
+    return initialURL;
+  },
+
+  // // Custom function to subscribe to incoming links
+  // subscribe(listener) {
+  //   // Listen to incoming links from Firebase Dynamic Links
+  //   // const unsubscribeFirebase = dynamicLinks().onLink(({url}) => {
+  //   //   listener(url);
+  //   // });
+
+  //   // Listen to incoming links from deep linking
+  //   const linkingSubscription = Linking.addEventListener('url', ({url}) => {
+  //     listener(url);
+  //   });
+
+  //   return () => {
+  //     // Clean up the event listeners
+  //     // unsubscribeFirebase();
+  //     linkingSubscription.remove();
+  //   };
+  // },
+
+  config: {
+    screens: {
+      Details: 'Details',
+      Home: 'Home',
+    },
+  },
+};
+
 function App() {
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator initialRouteName="Home">
         <Stack.Screen
           name="Home"
           component={HomeScreen}
-          options={{title: 'Dashboard'}}
+          // options={{title: 'Dashboard'}}
         />
         <Stack.Screen name="Details" component={DetailsScreen} />
         <Stack.Screen name="CreatePost" component={CreatePostScreen} />
